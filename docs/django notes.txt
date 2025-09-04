@@ -1,0 +1,373 @@
+Django Forms:
+how to pass a value to a model form
+   form = MyModelForm(initial={'field_name': 'value'})
+
+Django Relationship:
+======================
+one-to-Many Reltionship
+------------------------
+for the one to many relationship like question and choices
+question:
+ id,question text,pub_date
+choices:
+ id,choice_text,votes,question(fk)
+here as the choices has the fk of the question so we can access the question details by directly using like this->
+choice_obj.question.text // direct access 
+but to access the choices form the question we have to use the reverse access like this->
+question_obj.choices_set.all()--> here the _set will be the default manager name to change the default manger name we can use 'related_name' say 
+question=model.foreignKey(Question,on-delete=model.CASCADE,related_name='choice')
+many-to-many
+-------------
+publication:
+ id,title
+article:
+ id,headline,publication(mtm)[publications = models.ManyToManyField(Publication)]
+**here the articles can have multiple publications and we can add those multiple publications by using the 'add' method.
+a2 = Article(headline="NASA uses Python")
+a2.save()//first we have to save the article after that we can add publications. or else we get error.
+a2.publications.add(p1, p2) // can add multiple value at a time
+a2.publications.add(p3)// used to add objects to the a2 publication
+
+*Create and add a Publication to an Article in one step using create():
+new_publication = a2.publications.create(title="Highlights for Children")
+Adding via the ‘other’ end of an m2m:
+a4 = Article(headline="NASA finds intelligent life on Earth")
+a4.save()
+p2.article_set.add(a4)
+
+one-to-one Relationship
+-----------------------
+created when a a single table has multiple values and we just separate the entire table into two tables and they  have the one to one relationship
+like
+a user has his own profile 
+user: 
+id,name,email,password,..
+profile:
+id,user(oto),profile_image,cover_image,.. like that
+
+try:
+     p2.restaurant
+except ObjectDoesNotExist:
+     print("There is no restaurant here.")
+There is no restaurant here.
+**we have to use try except for get or this type of object finding as it returns a ObjectDoesNotExist Exception.
+
+forms:
+=======
+In Django there is a form module (from django import form) which has the Form Class and to create a from we have to inherit that base Form class like this 
+class Myform(from.Form):
+    pass
+and all the fields of the forms are also a class like [froms.CharField] which perform two major task 1.render the form field into the browser and gives instruction to the browser like label, maxlength.
+2.when the data re received form the browser then validate the data.
+ for the validation every form instance has a 'is_valid()' method which returns true or false.
+ the if the form is valid then we can access the form data from the "cleaned_data" attribute like this  form.cleaned_data['field_Name']
+ 
+If we arrive at this view with a GET request, it will create an empty form instance and place it in the template context to be rendered. This is what we can expect to happen the first time we visit the URL.
+f the form is submitted using a POST request, the view will once again create a form instance and populate it with data from the request: form = NameForm(request.POST) This is called “binding data to the form” (it is now a bound form).
+after that if the form.is_valid() returns true then we can get the data from the form.cleaned_data & can do the processing with the data.
+we can populate the form data  of a form instance by using initial like this-->
+initial_data = {"name": "John Doe", "email": "john.doe@example.com"}
+       form = MyForm(initial=initial_data)
+
+widgets
+--------
+It handles how a html input element will work
+we can specify widget to display like
+comment forms.CharField(widget=froms.Textarea)
+forms.ChoiceField(widget=forms.RadioSelect,choices=CHOICES)--> for radio fields
+froms.MultipleChoiceField(widget=CheckboxSelectMultiple,choices=CHOICES,required=False,)--> fro multiple value checkbox selection
+we can also create froms from model by using the ModelForm
+like this-->
+calss Myform(forms.ModelForm):
+	class Meta:
+		model:model_name,
+		fields:'__all__' 
+In the model form we can add the widgets to the fields by defining the widgets into the Meta class like this-->
+class Meta:
+	model=model_name
+	fields=['f1','f2',....]
+	widgets={
+		'field_name':froms.Textarea()
+	}
+	
+ORM:(Object Relational Mapper)
+===============================
+we can write the query in the python code and orm will return us a object called "queryset" and we can see the original query like this-->str(queryset_object.query)
+**How to find the query associated with a queryset?
+1.queryset = Event.objects.all()
+2.queryset = Event.objects.filter(years_ago__gt=5)
+[here __gt stands for < like this there are many line __lte,__exact,__iexact]
+**How to do OR queries in Django ORM?
+ queryset = User.objects.filter(
+1.first_name__startswith='R'
+) | User.objects.filter(last_name__startswith='D'
+)
+2.from django.db.models import Q
+qs=User.objects.filter(Q(first_name__startswith='R')|Q(last_name__startswith='D'))
+**How to do AND queries in Django ORM?
+• filter(<condition_1>, <condition_2>)
+• queryset_1 & queryset_2
+• filter(Q(<condition_1>) & Q(<condition_2>))
+** How to do a NOT query in Django queryset?
+Method 1 using exclude
+Method 2 using ~Q() method
+**How to do union of two querysets from same or different models?
+q1.union(q2)
+**How to select some fields only in a queryset?
+• values and values_list methods on queryset.
+• only_method
+1. queryset = User.objects.filter(
+first_name__startswith='R'
+).values('first_name', 'last_name')
+2.queryset = User.objects.filter(
+first_name__startswith='R'
+).only("first_name", "last_name")
+***The only difference between only and values is only also fetches the id
+
+Annotate vs aggregate
+----------------------
+The annotate is used to combine an extra filed into all the objects of the query set.
+But the aggregate is used to return a single gist like sum count and average like that form the entire query set.
+suppose there are two models say Seller -> id,name and Order->id,seller(fk),total
+here if I want to get the total order price for each seller then we will go for the annotate like this
+Seller.objects.annotate(total_order=Sum('order_set__total'))
+and if i want to get the entire total or say grand total then we go for 
+Seller.objects.aggregate(grand_total=Sum('order_set__toal'))
+
+authentication
+==========================
+In Django we have a authentication system.
+and it is done by the default "User" model provided by the Django.
+we have the username and the password field through which we can use the authentication system.
+fro authentication first we have to create a user using the User.objects. create_user(username,email,password)
+Now there is a authenticate method  which helps to find out weather there is a actual user present by the given username and password or not is if present it returns the "user object" or else it returns "None".
+so we can check like that:
+from django.contrib.auth import authenticate
+user=authenticate(username='username',password='pass')
+if user is not None:
+   # do log in that user 
+else:
+   # user is not authenticated
+we can also authenticate a user via web request like in the request object there is a user object
+like request.user --> username if it is a valid user or else 'AnonymousUser'.
+now there is also a "is_authenticated" member which store true if there is a valid user or else False.
+**How to login a user:
+------------------------
+in the django.contrib.auth there is a 'login' method
+through which we can login a user like this -->
+from django.contrib.auth import authenticate,login
+user=authenticate(username=username,password=password)
+if user is not None:
+   login(request,user)
+   #do the redirect stuff
+ else:
+   # inavlid login
+   
+$$ what happens under the hood??
+when the user is logged in using the login method or the login method is called 
+1.Django sets a session ID in the user’s browser. This is typically stored in a browser cookie named sessionid.
+2.Django then associates the request.user with the authenticated user instance, so that in future requests, you can access request.user to know who is logged in.
+3.The session ID is stored on the server-side, and the session data is tied to the session ID from the browser cookie.
+each time the request is sent by the user through the browser then it checks the session id the request cookies then checks weather it is in the session table of the back-end or not if it is there then is collects all the info. form that and sets the request.user as the valid user details objects this is the simplest explanation of the entire  default authentication mechanism of Django.
+
+permissions
+===============
+This is used to provide the authorization in the project.
+Django automatically create four permissions
+add_modelName,change_modelName,delete_modelName,view_modelName
+
+**creating custom permissions:
+---------------------------------
+custom permissions in a model
+class Book(models.Model):
+  title=models.CharField(max_length=100)
+  class Meta:
+      permissions=[
+      	('can_publish','Can publish the book'),
+      	('can_archive','can archive the book'),
+      ]
+
+**Adding and removing permissions to a user or group:
+----------------------------------------------------
+from djang.contrib.auth.models import User,Group,Permission
+user=User.objects.get(id=1)
+perm=Permission.objects.get(codename='permission_name')
+group=Group.objects.get(name='groupname')
+
+group.permissions.add(perm)
+group.permissions.remove(perm)
+user.user_permissions.add(perm)
+user.user_permissions.remove(perm)
+user.groups.add(group)->adding user to a specific group.
+**checking wheather a user or group has a permission or not:
+------------------------------------------------------------
+user.has_perm('appname.perm_name)
+
+also can be done by the @permission_required decorator
+from django.contib.auth.decorators import permission_required
+
+@permission_required('appname.perm_name',login_url='url',reaise-exception=False)
+def view(req):
+ ;;;;;
+ 
+**messages:
+==========
+this is lied in the django.contrib
+from dajngo.contrib import messages
+to ddiaplay the message we ca don in the view like this -->
+messages.sucess(request,'message text') or messages.error(request,'message text') or messages.warning(request,'message text') like thhis many more...
+
+
+static files:
+==============
+In Django the static files is used to serve the the js ,css or static imagefiles.
+ now therea are two ways to save static files one is app level and another is global level we can do the both ways but the global way is optional.
+fro writing the app level 
+in setting's instaled we should assure that we have 'django.contrib.staticfiles' this 
+ and there is a STATIC_URL='/static/'
+ in the dev. process we can create a static folder inside which we have the appname and then the type and then the file name this is the best practices. for the example-->
+ base_dir
+ -app1
+ --static
+ ---app1
+ ----css
+ -----index.css
+ like this we can save our static files and to access those file we have to use the {%load static%} at the top of the html page before using any static files and for the url or src we have to provide like this-->src="{% static 'app1/css/index.css'%}"
+ 
+for the global static we have to create a static folder into the base dirs folder level then same like that create seperate folder for css,js and image then in the settings we have to add a variabel called STATICFILES_DIRS=[
+BASE_DIRS/'static',
+]
+actually when we run the runserver all the django.contrib.staticfiles handels all the thing 
+but when we are in the production level then we have to change something 
+like in the setting we have create a root where all the static files will be collected when we call the python manage.py collectstatic 
+so for the set the STATIC_ROOT=BASE_DIRS/'staticfiles'
+class-based-views:
+===================
+Media:
+=====
+for the media first we have to change in the settings
+MEDIA_URL='/media/'
+MEDIA_ROOT=BASE_DIR/'media'
+then to store the file  we have to create a model where the file path will be stored.
+and in the models there is a models.FileField(upload_to='folder name inside the media where the file will get storede')
+for the forms the file data can be get by the request.FILES object and we can get any file uploaded via form like this fileinstance=request.FILES['field name']
+and in the templates in the <form > we have to provide a attribute called enctype="multipart/form-data" or else it will not return a empty field with no object value.
+
+Pagination:
+==========
+the entire pagination is done or managed by a Paginator Class which is in the 
+from django.core.paginator import Paninator
+and to show all the objects into multiple pages 
+first we have to create a paginator object
+objects=[1,2,3,4,5,6,7,8,9]
+p=Paginator(objects,2//[number of items per page])
+now in the view we have to handel the view like this
+media,class-based-views,pagination
+page_number=request.GET('page')
+page_obj=paginator.get_page(page_number)
+//page_obj=paginator.get_page(request.GET['page'])
+and we can return the page_obj to the templates
+now we can check 
+page_obj.has_next --> checking wheater there is any next page or not and can access the page by page_obj.next_page_number
+similarly for the previous page 
+page_obj.has_previous
+page_obj.previous_page_number
+we can access any page using this page object or can check the total no of pages using the page_obj.pagniator.num_pages
+
+Rest Api:
++++++++++++++++
+serializers:
+=============
+from rest-framework import serializers
+class ModelNameSerializer(serializerz.ModelSerializer):
+   class Meta:
+      model=ModelName
+      fields='__all__'
+by this we can create the serializers for our models
+views:
+======
+In the rest-framework we can handle the view in multiple way.
+1.using the normal function based views
+from rest-framework.decorators import api_view
+from rest-framework.response import Response
+from rest_framework import status
+@api_view(['GET','POST'])
+def view_function(request,parm):
+   if request.method=='POST':
+      do the things..
+      serializer=Someserializer(request.data)
+      if serializer.is_valid():
+          serializer.save()
+      	  return Response(serialiazer.data,ststus=stutus.HTTP_200_OK
+like this we can create the normal viewes
+2.creating the class based views using the APIView
+we can also create class based views inheriting the APIView class
+from rest_framework.views import APIView
+class Myview(APIView):
+   def get(self,request,parm):
+      logic//
+   def post(self,request,parm):
+      logic//
+
+3.using the GenericAPIView ad mixins
+from rest_framework import mixins
+from rest-framework import generics
+
+class Myview(mixins.ListModelMixin,-->for listing the model
+mixins.CreateModelmicin,-->for create a model instance
+mixins.RetrievemodelMixin,-->for retrieving a model instance
+mixins.UpdateModelMixin,-->for updating a model instance
+mixins.DeletemodelMixin,-->for deleting a model instance
+genrics.GenericAPIView)
+   queryset=ModelName.objects.all()
+   serializer_class=SerializerName
+   
+   def get/post/put/delete/get(self,request,*args,**kwargs):
+      return self.list/create/update/delete/retrieve(request,*args,**kwargs)
+Signals:
+========
+when a  data or a instance is saved/created/deleted then it goes with two phases.
+pre_save
+post_save
+pre_delete
+post_delete
+so using this we can call some handler function
+
+from django.dispatcher import receiver
+from django.db.model.siganls import pre_save
+from django.contrib.auth.models import User
+@receiver(pre_save,instance=User)
+def handel_user_pre_saved(sender,instance,created,*args,**kwargs):
+   print(instance.username,'is being saved'
+like this we can create this
+
+
+
+
+
+
+
+
+
+
+
+
+Production level code:
+=====================
+first create a congif folder consists of two sub-folder called django ,settings
+In the django folder all the main settings are involved.
+this is further divided into multiple file based on the condition we use those files like 
+base.py--> for all the general settings
+local.py--> for the settings need in the development phase
+production.py--> settings needed for the production level.
+test.py--> settings needed for the testing
+and in the settings folder have the all app related settings like email,file_upload,other third-party app/services like stripe.
+
+Dealing with environment variables :
+==================================
+pip install django-environ
+from environ import Env
+env=Env() -->This is the object of the environvariable
+now env.read_env(the file path)[we have to create a .env file from where it will read all the environment variable, and we need the file path at the env.read_env() to get all the environment variables]
+
+
