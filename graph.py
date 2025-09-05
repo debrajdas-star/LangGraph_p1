@@ -17,7 +17,7 @@ def chatbot(state:State):
 
 
 graph_builder.add_node("chatbot",chatbot)
-tool_node=ToolNode(tools=tools)
+tool_node = ToolNode(tools=tools)
 graph_builder.add_node("tools",tool_node)
 
 
@@ -29,7 +29,7 @@ graph_builder.add_conditional_edges(
 graph_builder.add_edge(START,"chatbot")
 graph_builder.add_edge("tools","chatbot")
 
-graph=graph_builder.compile()
+graph = graph_builder.compile()
 
 # response=graph.invoke({"messages":"Hi i am debraj"})
 # print(response)
