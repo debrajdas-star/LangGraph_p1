@@ -1,9 +1,10 @@
 from typing import TypedDict, Annotated
-from llms import chat_model_with_tools, tools
+from llms import chat_model_with_tools
 from langgraph.graph import StateGraph, START
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import InMemorySaver
+from tools import tools
 # print(tools)
 
 #created a in memorysaver for savig all the states belongs to a particular "thread_id"
@@ -18,7 +19,7 @@ graph_builder = StateGraph(State)
 
 def chatbot(state:State):
 
-    response=chat_model_with_tools.invoke(state["messages"])
+    response = chat_model_with_tools.invoke(state["messages"])
     return {"messages": [response]}
 
 

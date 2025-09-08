@@ -13,7 +13,7 @@ while(1):
     if query.strip().lower() == 'exit':
         print("Thanks for using ...")
         break
-    prompt = """You are a helpful assistant that can use tools to answer questions."""
+    prompt = """You are a helpful assistant that can use tools to answer questions and perform the task given by the user,if you can't to do so just apolize."""
     state = {"messages":[SystemMessage(content=prompt),HumanMessage(content=query)]}
     print(f'You:{query}')
     print('AI:', end='')
