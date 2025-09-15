@@ -13,9 +13,16 @@ class State(TypedDict):
     answer: str
     messages: Annotated[list[AnyMessage],add_messages]
 
+
 def chatbot(state: State):
+    """This is the chatbot node
+    
+    here is there is summary then it will take both the summary \
+    and the messages,but if it does not have the summary and only take the messages."""
+    
     summary = state.get("summary","")
     question = state.get("question","")
+    #here we are chekink if summary is present or not 
     if summary:
         prompt = [HumanMessage(content=summary)] + state["messages"]
     else:
@@ -28,7 +35,13 @@ def chatbot(state: State):
     return state
 
 def summarize(state: State):
-    messages = state['messages']
+    """This is the for summerize the messages
+    
+    this nodes takes all the messages and then create a summary \
+    and delete all the unecessary messages ,except the last two messages\
+    or else it keeps it same."""
+
+    messages = state['messages'] 
     summary = state.get("summary","")
 
     if not summary:
@@ -38,6 +51,7 @@ def summarize(state: State):
     else:
         return_summary = summary
     
+    #deleting all the unnesary messages,except the  last two messages.
     deleted_messages =  [RemoveMessage(id=m.id) for m in messages[:-2]]
 
     state["summary"] = return_summary
@@ -46,17 +60,26 @@ def summarize(state: State):
     return state
 
 def should_summarize(state:State):
+    """Conditional edge
+    
+    checks if the message length id greater than 5 then it will summerize of it will end."""
     if len(state['messages'])>5:
         return "summarize"
     return END
 
+
+#buildig the graph
 builder = StateGraph(State)
+
+#adding all the nodes of the graph
 builder.add_node("chatbot",chatbot)
 builder.add_node("summarize",summarize)
 
+#adding all the edges of the graph
 builder.add_edge(START,"chatbot")
 builder.add_conditional_edges("chatbot",
                               should_summarize)
 builder.add_edge("summarize",END)
 
+#creating the graph with the memory
 graph_with_semmerizer = builder.compile(checkpointer=memory)
