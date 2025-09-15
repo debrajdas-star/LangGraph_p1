@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
-from graph import graph
+# from graph import graph
+from summerizer import graph_with_semmerizer
 
 load_dotenv()
 
@@ -14,11 +15,11 @@ while(1):
         print("Thanks for using ...")
         break
     prompt = """You are a helpful assistant that can use tools to answer questions and perform the task given by the user,if you can't to do so just apolize."""
-    state = {"messages":[SystemMessage(content=prompt),HumanMessage(content=query)]}
+    state = {"messages":[HumanMessage(content=query)],"question":query}
     print(f'You:{query}')
     print('AI:', end='')
     #While invoking the graph we have to provide the config which the graph will follow.
-    state=graph.invoke(state, config=config)
-    print(state['messages'][-1].content)
+    state=graph_with_semmerizer.invoke(state, config=config)
+    # print(state['messages'])
     print("-----------",state)
     print()
