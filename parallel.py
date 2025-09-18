@@ -153,7 +153,6 @@ intermediates = ["b", "c", "d"]
 
 builder.add_conditional_edges("a",
                               bc_or_cd,
-                              intermediates
                               )
 for node in intermediates:
     builder.add_edge(node,"e")
